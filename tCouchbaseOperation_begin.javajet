@@ -18,5 +18,4 @@ String connection = ElementParameterParser.getValue(node, "__CONNECTION__");
 %>
 com.couchbase.client.CouchbaseClient couchbaseClient_<%=cid %>
  = (com.couchbase.client.CouchbaseClient)globalMap.get("couchbase_<%=connection %>");
-System.out.println(couchbaseClient_<%=cid %>);
 int nb_line_<%=cid %> = 0;
