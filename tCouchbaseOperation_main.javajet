@@ -1,0 +1,103 @@
+<%@ jet imports="
+java.util.List
+org.talend.core.model.process.INode
+org.talend.core.model.process.ElementParameterParser
+org.talend.core.model.metadata.IMetadataTable
+org.talend.core.model.metadata.IMetadataColumn
+org.talend.core.model.process.IConnection
+org.talend.core.model.process.IConnectionCategory
+org.talend.designer.codegen.config.CodeGeneratorArgument
+org.talend.core.model.metadata.types.JavaTypesManager
+org.talend.core.model.metadata.types.JavaType
+org.talend.core.model.process.EConnectionType" 
+%> 
+
+<%
+CodeGeneratorArgument codeGenArgument = (CodeGeneratorArgument) argument;
+INode node = (INode)codeGenArgument.getArgument();
+String cid = node.getUniqueName();
+
+String operation = ElementParameterParser.getValue(node, "__OPERATION__");
+String targetID = ElementParameterParser.getValue(node, "__ID__");
+String expiration = ElementParameterParser.getValue(node, "__EXPIRATION__");
+String setValue = ElementParameterParser.getValue(node, "__VALUE__");
+
+List<IMetadataTable> metadatas = node.getMetadataList();
+if(metadatas == null || metadatas.size() == 0) {
+	return "";
+}
+IMetadataTable metadata = metadatas.get(0);
+
+List<? extends IConnection> outConns = node.getOutgoingConnections();
+for(IConnection conn : outConns) {
+
+  if(conn.getLineStyle().equals(EConnectionType.FLOW_MAIN)
+   || conn.getLineStyle().equals(EConnectionType.FLOW_MERGE)) {
+    String outputConnName = conn.getName();
+%>
+
+    String id_<%=cid %> = null;
+    Object value_<%=cid %> = null;
+    Integer expiration_<%=cid %> = null;
+    String message_<%=cid %> = null;
+
+    id_<%=cid %> = <%=targetID %>;
+    <% if ("SET".equals(operation)) {%>
+      value_<%=cid %> = <%=setValue %>;
+      expiration_<%=cid %> = <%=expiration %>;
+    <% } %>
+
+    boolean result_<%=cid %> = true;
+    
+    <% if ("GET".equals(operation)) {%>
+      value_<%=cid %> = couchbaseClient_<%=cid %>.get(id_<%=cid %>);
+    
+    <% } else if ("SET".equals(operation)) {%>
+      net.spy.memcached.internal.OperationFuture<Boolean> setOp_<%=cid %>
+       = couchbaseClient_<%=cid %>.set(id_<%=cid %>, expiration_<%=cid %>, value_<%=cid%>);
+      if(!setOp_<%=cid %>.get()) {
+        message_<%=cid %> = setOp_<%=cid %>.getStatus().getMessage();
+        result_<%=cid %> = false;
+      } 
+    
+    <% } else if ("DELETE".equals(operation)) {%>
+      net.spy.memcached.internal.OperationFuture<Boolean> deleteOp_<%=cid %>
+       = couchbaseClient_<%=cid %>.delete(id_<%=cid %>);
+      if(!deleteOp_<%=cid %>.get()) {
+        message_<%=cid %> = deleteOp_<%=cid %>.getStatus().getMessage();
+        result_<%=cid %> = false;
+      } 
+    
+    <% } %>
+    
+    // Map the result if appropriate columns are defined.
+    <%=outputConnName %>Struct rowTmp_<%=cid%> = new <%=outputConnName %>Struct();
+    
+    <% if(metadata.getColumn("id") != null) {%>
+  	  rowTmp_<%=cid%>.id = id_<%=cid %>;
+  	<% } %>
+
+    <% if(metadata.getColumn("result") != null) {%>
+      rowTmp_<%=cid%>.result = result_<%=cid %>;
+  	<% } %>
+
+    <% if(metadata.getColumn("value") != null) {%>
+      rowTmp_<%=cid%>.value = value_<%=cid %>;
+  	<% } %>
+
+    <% if(metadata.getColumn("message") != null) {%>
+      rowTmp_<%=cid%>.message = message_<%=cid %>;
+  	<% } %>
+
+	<%=outputConnName %> = rowTmp_<%=cid%>;
+
+    ++nb_line_<%=cid %>;	
+
+<%
+  }
+}
+%>
+
+
+
+
