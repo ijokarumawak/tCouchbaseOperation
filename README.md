@@ -25,7 +25,7 @@ Fill out required information to connect to a Couchbase Server cluster :
 
 - **Expiration** (only available with Set) : Specify how long the document will be alive. 0 means forever. Please check [Couchbase Server manual](http://www.couchbase.com/docs/couchbase-sdk-java-1.1/couchbase-sdk-java-set-set.html) for further information.
 
-- **Value** (only available with Set) : Specify the value to be stored in the database. Similar to the ID, you can use string literal like **"someValue"** or flow connection like **row3.value**. To store complex JSON documents, I recommend you to use tWriteJSONField and [tParseJSON](https://github.com/ijokarumawak/tParseJSON).
+- **Value** (only available with Set) : Specify the value to be stored in the database. Similar to the ID, you can use string literal like **"someValue"** or flow connection like **row3.value**. To store simple and flat JSON documents, I recommend you to use [tRowToJSON](https://github.com/ijokarumawak/tRowToJSON). For more complex JSON documents, you could use tWriteJSONField and [tParseJSON](https://github.com/ijokarumawak/tParseJSON), however it is slower. Please refer [Wiki](https://github.com/ijokarumawak/tCouchbaseOperation/wiki) for examples.
 
 - **Check operation result** (only available with Set and Delete) : When it is checked (as default), this component waits until the operation result is returned from Couchbase Server. When it is unchecked, this component doesn't wait the result of the operation (***fire-and-forget style***), it will increase the performance when you need to load a large number of rows, however it doesn't know if the operation is completed successfully. The **result** column will always be **true** and the **message** column is null if it is not checked.
 
