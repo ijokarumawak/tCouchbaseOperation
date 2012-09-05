@@ -29,6 +29,45 @@ if(metadatas == null || metadatas.size() == 0) {
 }
 IMetadataTable metadata = metadatas.get(0);
 
+%>
+
+
+String id_<%=cid %> = null;
+Object value_<%=cid %> = null;
+Integer expiration_<%=cid %> = null;
+String message_<%=cid %> = null;
+net.spy.memcached.internal.OperationFuture<Boolean> op_<%=cid %> = null;
+boolean result_<%=cid %> = true;
+
+id_<%=cid %> = <%=targetID %>;
+<% if ("SET".equals(operation)) {%>
+  value_<%=cid %> = <%=setValue %>;
+  expiration_<%=cid %> = <%=expiration %>;
+<% } %>
+
+
+<% if ("GET".equals(operation)) {%>
+  value_<%=cid %> = couchbaseClient_<%=cid %>.get(id_<%=cid %>);
+
+<% } else if ("SET".equals(operation)) {%>
+  op_<%=cid %>
+   = couchbaseClient_<%=cid %>.set(id_<%=cid %>, expiration_<%=cid %>, value_<%=cid%>);
+
+<% } else if ("DELETE".equals(operation)) {%>
+  op_<%=cid %>
+   = couchbaseClient_<%=cid %>.delete(id_<%=cid %>);
+
+<% } %>
+
+if(op_<%=cid %> != null && <%=checkResult %>) {
+  if(!op_<%=cid %>.get()) {
+    message_<%=cid %> = op_<%=cid %>.getStatus().getMessage();
+    result_<%=cid %> = false;
+  }
+}
+
+<%
+
 List<? extends IConnection> outConns = node.getOutgoingConnections();
 for(IConnection conn : outConns) {
 
@@ -37,40 +76,6 @@ for(IConnection conn : outConns) {
     String outputConnName = conn.getName();
 %>
 
-    String id_<%=cid %> = null;
-    Object value_<%=cid %> = null;
-    Integer expiration_<%=cid %> = null;
-    String message_<%=cid %> = null;
-    net.spy.memcached.internal.OperationFuture<Boolean> op_<%=cid %> = null;
-    boolean result_<%=cid %> = true;
-
-    id_<%=cid %> = <%=targetID %>;
-    <% if ("SET".equals(operation)) {%>
-      value_<%=cid %> = <%=setValue %>;
-      expiration_<%=cid %> = <%=expiration %>;
-    <% } %>
-
-    
-    <% if ("GET".equals(operation)) {%>
-      value_<%=cid %> = couchbaseClient_<%=cid %>.get(id_<%=cid %>);
-    
-    <% } else if ("SET".equals(operation)) {%>
-      op_<%=cid %>
-       = couchbaseClient_<%=cid %>.set(id_<%=cid %>, expiration_<%=cid %>, value_<%=cid%>);
-    
-    <% } else if ("DELETE".equals(operation)) {%>
-      op_<%=cid %>
-       = couchbaseClient_<%=cid %>.delete(id_<%=cid %>);
-    
-    <% } %>
-
-    if(op_<%=cid %> != null && <%=checkResult %>) {
-      if(!op_<%=cid %>.get()) {
-        message_<%=cid %> = op_<%=cid %>.getStatus().getMessage();
-        result_<%=cid %> = false;
-      }
-    }
-    
     // Map the result if appropriate columns are defined.
     <%=outputConnName %>Struct rowTmp_<%=cid%> = new <%=outputConnName %>Struct();
     
